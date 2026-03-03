@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGA Restaurante | Control Profesional</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i data-lucide="utensils-crossed"></i>
+                <span>GastroStock</span>
+            </div>
+            <nav>
+                <a href="#" class="nav-item active" data-section="dashboard">
+                    <i data-lucide="layout-dashboard"></i> Dashboard
+                </a>
+                <a href="#" class="nav-item" data-section="inventory">
+                    <i data-lucide="package"></i> Inventario
+                </a>
+                <a href="#" class="nav-item" data-section="provisioning">
+                    <i data-lucide="shopping-cart"></i> Aprovisionamiento
+                </a>
+                <a href="#" class="nav-item" data-section="kanban">
+                    <i data-lucide="columns"></i> Kanban Vencimiento
+                </a>
+                <a href="#" class="nav-item" data-section="consumos">
+                    <i data-lucide="calculator"></i> Consumos
+                </a>
+                <a href="#" class="nav-item" data-section="analysis">
+                    <i data-lucide="bar-chart-3"></i> Análisis
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="avatar">C</div>
+                    <span>Administrador</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <header class="top-bar">
+                <h1 id="section-title">Dashboard</h1>
+                <div class="actions">
+                    <button class="btn btn-primary" id="add-stock-btn">
+                        <i data-lucide="plus"></i> Nuevo Registro
+                    </button>
+                </div>
+            </header>
+
+            <div id="main-view" class="main-view">
+                <!-- Dashboard View (Default) -->
+                <div id="dashboard-section" class="section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-label">Stock Total</span>
+                            <span class="stat-value" id="total-stock">---</span>
+                            <span class="stat-trend positive">+5% vs ayer</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Valor Almacén</span>
+                            <span class="stat-value" id="stock-value">--- €</span>
+                            <span class="stat-trend negative">-2% vs ayer</span>
+                        </div>
+                        <div class="stat-card urgent">
+                            <span class="stat-label">Alertas Stock</span>
+                            <span class="stat-value" id="stock-alerts">0</span>
+                            <span class="stat-trend">Requiere atención</span>
+                        </div>
+                        <div class="stat-card info">
+                            <span class="stat-label">Desperdicio (MTD)</span>
+                            <span class="stat-value" id="monthly-waste">--- €</span>
+                            <span class="stat-trend">Meta: < 50€</span>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-content card">
+                        <div class="recent-list">
+                            <h3>Movimientos Recientes</h3>
+                            <div class="list-content" id="recent-movements">
+                                <!-- Se cargará dinámicamente -->
+                                <p class="placeholder-text">Cargando movimientos...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Otras secciones se cargarán aquí -->
+                <div id="inventory-section" class="section">
+                    <div class="card">
+                        <div class="table-actions">
+                            <input type="text" placeholder="Buscar producto..." class="search-input">
+                            <select class="filter-select">
+                                <option value="all">Todas las categorías</option>
+                                <option value="meat">Carnes</option>
+                                <option value="veg">Verduras</option>
+                                <option value="dry">Secos</option>
+                            </select>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Stock</th>
+                                    <th>Unidad</th>
+                                    <th>Costo/u</th>
+                                    <th>Vencimiento</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-table-body">
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Aprovisionamiento Section -->
+                <div id="provisioning-section" class="section">
+                    <div class="card">
+                        <h3>Sugerencias de Pedido (Stock Bajo)</h3>
+                        <p class="placeholder-text">Basado en tus productos con bajo inventario:</p>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Stock Actual</th>
+                                    <th>Proveedor</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="provisioning-table-body">
+                                <tr>
+                                    <td colspan="4" style="text-align:center; padding: 20px;">Cargando sugerencias...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Kanban Expiry Section -->
+                <div id="kanban-section" class="section">
+                    <div class="kanban-board">
+                        <div class="kanban-col urgent">
+                            <h3><i data-lucide="alert-triangle"></i> Consumo Inmediato</h3>
+                            <div class="kanban-cards" id="kanban-urgent"></div>
+                        </div>
+                        <div class="kanban-col warning">
+                            <h3><i data-lucide="clock"></i> Próximo Vencimiento</h3>
+                            <div class="kanban-cards" id="kanban-warning"></div>
+                        </div>
+                        <div class="kanban-col safe">
+                            <h3><i data-lucide="check-circle"></i> Stock Seguro</h3>
+                            <div class="kanban-cards" id="kanban-safe"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Consumos Section -->
+                <div id="consumos-section" class="section">
+                    <div class="card">
+                        <div class="top-bar-section">
+                            <h3>Registro de Consumo Diario</h3>
+                            <p class="placeholder-text">Registra lo que has utilizado para cocinar hoy.</p>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Stock Disp.</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="consumos-table-body">
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card" style="margin-top: 24px;">
+                        <h3>Historial de Consumo Reciente</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Costo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="consumos-history-body">
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Análisis Section -->
+                <div id="analysis-section" class="section">
+                    <div class="stats-grid">
+                        <div class="stat-card urgent">
+                            <span class="stat-label">Valor Total Desperdiciado</span>
+                            <span class="stat-value" id="total-waste-annual">0 €</span>
+                        </div>
+                        <div class="stat-card info">
+                            <span class="stat-label">Meta Mensual</span>
+                            <span class="stat-value">Eficacia > 95%</span>
+                        </div>
+                    </div>
+                    <div class="charts-row">
+                        <div class="chart-container card">
+                            <h3>Distribución de Desperdicio</h3>
+                            <div style="height: 300px; position: relative;">
+                                <canvas id="wasteAnalysisChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="recent-list card">
+                            <h3>Consejo de Ahorro</h3>
+                            <div class="list-content">
+                                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 10px;">
+                                    "Hemos detectado que el <strong>Solomillo</strong> tiene una rotación lenta.
+                                    Considera reducir el pedido semanal en un 10% para evitar mermas."
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-container" class="modal-overlay hidden">
+        <div class="modal">
+            <header>
+                <h2 id="modal-title">Añadir Producto</h2>
+                <button class="close-btn" id="close-modal">&times;</button>
+            </header>
+            <form id="stock-form">
+                <input type="hidden" name="id" id="item-id">
+                <div class="form-group">
+                    <label>Nombre del Producto</label>
+                    <input type="text" name="name" placeholder="Ej: Solomillo" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Cantidad</label>
+                        <input type="number" name="stock" value="0" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Unidad</label>
+                        <select name="unit">
+                            <option value="kg">kg</option>
+                            <option value="ud">ud</option>
+                            <option value="L">L</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Precio/Unidad (€)</label>
+                        <input type="number" name="price" value="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Vencimiento</label>
+                        <input type="date" name="expiry" required>
+                    </div>
+                </div>
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancel-btn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </footer>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/app.js?v=1.9"></script>
+</body>
+
+</html>
